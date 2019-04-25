@@ -1,0 +1,2 @@
+docker build -t backbone .
+sudo docker run --rm -ti --ipc=host backbone
