@@ -1,2 +1,10 @@
+Install docker https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce-1
+
+Install nvidia docker (optional) https://github.com/NVIDIA/nvidia-docker 
+
 docker build -t backbone .
-sudo docker run --rm -ti --ipc=host backbone
+
+sudo docker run --rm -ti --ipc=host -p 8888:8888 -v `pwd`:/workspace backbone
+
+jupyter notebook --allow-root --no-browser --ip=0.0.0.0
+
