@@ -5,9 +5,9 @@ Install nvidia docker (optional) https://github.com/NVIDIA/nvidia-docker
 
 sudo docker build -t backbone .
 
-sudo docker run --rm -ti --ipc=host -p 8888:8888 -v `pwd`:/workspace backbone
+sudo docker run --rm -ti --ipc=host -p 8889:8889 -v `pwd`:/workspace backbone
 
-jupyter notebook --allow-root --no-browser --ip=0.0.0.0
+jupyter notebook --allow-root --no-browser --ip=0.0.0.0 --port=8889
 
 ## Vast
 ssh -p 16659 root@ssh4.vast.ai -L 8080:localhost:8080
