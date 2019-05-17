@@ -21,7 +21,7 @@ from torchvision.transforms import Normalize
 data_dir = 'train'
 input_size = 224
 num_classes = 16
-batch_size = 32
+batch_size = 64
 num_epochs = 10
 num_workers = 16
 
@@ -164,7 +164,7 @@ def train_model(model, dataloaders, criterion, optmizer, num_epochs):
 
 
 def create_model(num_cls):
-    model = models.vgg11(pretrained=False)
+    model = models.vgg11(pretrained=True)
     num_ftrs = model.classifier[6].in_features
     model.classifier[6] = nn.Linear(num_ftrs, num_cls)
     return model
