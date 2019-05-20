@@ -21,11 +21,21 @@ mv hymenoptera_data data/
 rm hymenoptera_data.zip 
 
 ### Cat dog
-wget 'https://storage.googleapis.com/kaggle-competitions-data/kaggle/3362/all.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1558208774&Signature=OIneBgu8n7%2B1worGORzcY28SQvKVkmvq%2Fr4sjssF0yWMTVi%2BG1ofcrzd5HPmt0ZLrF8pyjZCglYjSbOsAah1nSWtHYbCD97wfFzrm%2BTMb70apJ%2BS1KCY6F8oBwYbwDvtEGNAEa2uO5RJ3OCStnDy7MNvHF89BtjdJME%2FfDtReuS4L7%2B%2B2X4JbRMbV7uF7AKnWJg4h3rW7R5QB42iCDqV%2Bw%2Fs5FaV77D05X1vXSisDcbILeqlJxnNHeGtocbxEA%2B0w71peJ0%2Bp3qGEn9NotNLhgHv6ieI3kTsR5POSnpCYmwptf%2BoUEfs%2FsN5kT7IkN%2BuDj6f29JBA4qE3Q%2F9TtDY5w%3D%3D&response-content-disposition=attachment%3B+filename%3Ddogs-vs-cats.zip'  --no-check-certificate -O cat_dog.zip
+From https://www.kaggle.com/c/dogs-vs-cats/data
+
+wget 'https://storage.googleapis.com/kaggle-competitions-data/kaggle/3362/all.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1558598123&Signature=dx6Qn2Oe6P%2BHPvP2MhExeVL7gxcbtC7zuqJMSm63Dd%2F5YqRBcNepRcvAkiWHWNdNJ6cL%2FdJi3MnEbBLan9dTTMAjlDJ9%2BZgn5b5if3ir0osaAt%2FBAfNleNSfSFZpH2inEdhj4%2FeBo%2Fz35ryVPbp5jk7EO%2BTDKHsWCTsj2ie9BgFP3cydZEew4iUwOLEdMiq%2FfKtPZnqODHaMibsknbfUpBGOhy2wd8HWGRfwWoZSCVZYAlJYYyRC5ssKaauePPZvefRAzhn6Xbro3xbNMZ6dx8GqFsH7QxMBk9USOvy6oDZH8bsyJ2b5n7ySh0owX7M0v8m3afyo1tvOpdRB4%2B83zg%3D%3D&response-content-disposition=attachment%3B+filename%3Ddogs-vs-cats.zip'  --no-check-certificate -O cat_dog.zip
 unzip cat_dog.zip
 unzip train.zip
 rm cat_dog.zip
 rm train.zip
 rm test1.zip
 
+### Tiny ImageNET
+wget http://cs231n.stanford.edu/tiny-imagenet-200.zip
+wget https://raw.githubusercontent.com/seshuad/IMagenet/master/tiny-imagenet-200/words.txt
+unzip tiny-imagenet-200.zip
+rm tiny-imagenet-200.zip 
+
 EBS 0.1 * 200 * 43200  /(86400 * 30) =
+
+rsync -av -e "ssh -p 18180" --exclude=".idea" --exclude=".git" --exclude="notebooks" backbone root@ssh5.vast.ai:/root
