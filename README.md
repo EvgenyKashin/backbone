@@ -41,8 +41,8 @@ EBS 0.1 * 200 * 43200  /(86400 * 30) =
 rsync -av -e "ssh -p 18180" --exclude=".idea" --exclude=".git" --exclude="notebooks" backbone root@ssh5.vast.ai:/root
 
 TODO:
-- tqdm +
-- checkpoint +
-- scheduler
+- tqdm +-
+- checkpoint +-
+- scheduler +-
 - tensorboard
-- early stopping
+- early stopping +-

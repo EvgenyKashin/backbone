@@ -1,8 +1,8 @@
 import time
-import copy
 from pathlib import Path
 import torch
 from . import utils
+
 
 class Bone:
     def __init__(self,
@@ -11,19 +11,23 @@ class Bone:
                  criterion,
                  optimizer,
                  scheduler=None,
+                 scheduling_after_ep=True,
+                 early_stop_epoch=None,
                  metric_fn=None,
+                 metric_increase=False,
                  batch_size=8,
                  num_workers=4,
-                 metric_increase=True,
                  weights_path='weights/best_model.pth'):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
-        self.scheduler = None
+        self.scheduler = scheduler
+        self.scheduling_after_ep = scheduling_after_ep
+        self.early_stop_epoch = early_stop_epoch
         self.metric_fn = criterion if metric_fn is None else metric_fn
+        self.metric_increase = metric_increase
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.metric_increase = metric_increase
         self.weights_path = Path(weights_path)
         self.epochs_count = 0
 
@@ -41,6 +45,9 @@ class Bone:
         running_metric = 0
         pbar = utils.get_pbar(self.dataloaders[phase], f'{phase} {epoch_num + 1 / self.epochs_count}')
 
+        if self.scheduler and not self.scheduling_after_ep:
+            self.scheduler.step()
+
         for inputs, labels in self.dataloaders[phase]:
             loss, metric = self.step(inputs, labels, phase)
 
@@ -54,7 +61,10 @@ class Bone:
 
         running_loss /= len(self.dataloaders[phase].dataset)
         running_metric /= len(self.dataloaders[phase].dataset)
-        pbar.clear() # TODO: test
+        pbar.clear()  # TODO: test
+
+        if self.scheduler and self.scheduling_after_ep:
+            self.scheduler.step(running_metric)
 
         return running_loss, running_metric
 
@@ -77,6 +87,7 @@ class Bone:
     def fit(self, epochs_count):
         start_time = time.time()
         self.epochs_count = epochs_count
+        epoch_without_improvement = 0
 
         # train_acc_history = []
         # val_acc_history = [] # tb
@@ -84,6 +95,7 @@ class Bone:
         best_metric = None
 
         def is_better(new_m, old_m):
+            # TODO: add delta
             if best_metric is None:
                 return True
             return new_m > old_m if self.metric_increase else new_m < old_m
@@ -91,19 +103,26 @@ class Bone:
         for epoch_num in range(epochs_count):
             # print(f'Epoch: {epoch}/{num_epochs-1}')
 
-            for phase in ['train', 'val']:  # TODO: test
+            for phase in ['train', 'val']:  # TODO: test phase
                 if phase == 'train':
                     self.model.train()
-                    loss, metric = self.epoch(epoch_num, phase)
                 else:
                     self.model.eval()
-                    loss, metric = self.epoch(phase)
+                loss, metric = self.epoch(epoch_num, phase)
 
                 print(f'{phase} Loss: {loss:.4f}, Metric: {metric:.4f}')
 
-                if phase == 'val' and is_better(metric, best_metric):
-                    best_metric = metric
-                    torch.save(self.model.state_dict(), self.weights_path)
+                if phase == 'val':
+                    if is_better(metric, best_metric):
+                        best_metric = metric
+                        torch.save(self.model.state_dict(), self.weights_path)
+                        epoch_without_improvement = 0
+                    else:
+                        epoch_without_improvement += 1
+
+            if self.early_stop_epoch is not None and epoch_without_improvement == self.early_stop_epoch:
+                print('Early stopping')
+                break
 
                 # if phase == 'val': # TODO:TB
                 #     val_acc_history.append(epoch_acc)
