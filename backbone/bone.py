@@ -12,7 +12,7 @@ class Bone:
                  criterion,
                  optimizer,
                  scheduler=None,
-                 scheduling_after_ep=True,
+                 scheduler_after_ep=True,
                  early_stop_epoch=None,
                  metric_fn=None,
                  metric_increase=False,
@@ -24,7 +24,7 @@ class Bone:
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.scheduling_after_ep = scheduling_after_ep
+        self.scheduler_after_ep = scheduler_after_ep
         self.early_stop_epoch = early_stop_epoch
         self.metric_fn = criterion if metric_fn is None else metric_fn
         self.metric_increase = metric_increase
@@ -76,7 +76,7 @@ class Bone:
         pbar = utils.get_pbar(self.dataloaders[phase],
                               f'{phase} {epoch_num + 1}/{self.epochs_count}')
 
-        if phase == 'val' and self.scheduler and not self.scheduling_after_ep:
+        if phase == 'val' and self.scheduler and not self.scheduler_after_ep:
             self.scheduler.step()
 
         for i, (inputs, labels) in enumerate(self.dataloaders[phase]):
@@ -103,7 +103,7 @@ class Bone:
                                             global_step=epoch_num)
 
         if phase == 'val':
-            if self.scheduler and self.scheduling_after_ep:
+            if self.scheduler and self.scheduler_after_ep:
                 self.scheduler.step(running_metric)
             lr = utils.get_lr(self.optimizer)
             self.phase_writer[phase].add_scalar('epoch/lr', lr,
