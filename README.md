@@ -30,14 +30,6 @@ rm cat_dog.zip
 rm train.zip
 rm test1.zip
 
-### Tiny ImageNET
-wget http://cs231n.stanford.edu/tiny-imagenet-200.zip
-wget https://raw.githubusercontent.com/seshuad/IMagenet/master/tiny-imagenet-200/words.txt
-unzip tiny-imagenet-200.zip
-rm tiny-imagenet-200.zip 
-
-EBS 0.1 * 200 * 43200  /(86400 * 30) =
-
 rsync -av -e "ssh -p 18180" --exclude=".idea" --exclude=".git" --exclude="notebooks" backbone root@ssh5.vast.ai:/root
 
 TODO:
@@ -46,3 +38,6 @@ TODO:
 - scheduler +-
 - tensorboard
 - early stopping +-
+
+conda remove pytorch torchvision
+conda install pytorch torchvision cudatoolkit=10.0 -c pytorch

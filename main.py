@@ -8,9 +8,9 @@ from datasets import cat_dog
 data_dir = 'train'
 input_size = 224
 num_classes = 2
-batch_size = 32
-num_epochs = 20
-num_workers = 24
+batch_size = 16
+epochs_count = 20
+num_workers = 8
 
 datasets = cat_dog.get_datasets(data_dir)
 
@@ -26,8 +26,9 @@ bone = Bone(model,
             datasets,
             criterion,
             optimizer,
-            utils.accuracy_metric,
-            batch_size,
-            num_workers)
+            metric_fn=utils.accuracy_metric,
+            metric_increase=True,
+            batch_size=batch_size,
+            num_workers=num_workers)
 
-bone.train(num_epochs)
+bone.fit(epochs_count)

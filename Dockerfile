@@ -19,4 +19,6 @@ RUN pip install pandas \
     scikit-learn \
     albumentations \
     torchsummary \
-    tb-nightly \ # TODO: requirements.txt
+    tb-nightly \
+    future
+    # TODO: requirements.txt

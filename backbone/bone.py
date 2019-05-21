@@ -124,10 +124,6 @@ class Bone:
         start_time = time.time()
         self.epochs_count = epochs_count
         epoch_without_improvement = 0
-
-        # train_acc_history = []
-        # val_acc_history = [] # tb
-        # best_model_wts = copy.deepcopy(model.state_dict()) # save immediately
         best_metric = None
 
         def is_better(new_m, old_m):
@@ -160,13 +156,6 @@ class Bone:
                     epoch_without_improvement == self.early_stop_epoch:
                 print('Early stopping')
                 break
-
-                # if phase == 'val': # TODO:TB
-                #     val_acc_history.append(epoch_acc)
-                # else:
-                #     train_acc_history.append(epoch_acc)
-
-            # print()
 
         time_elapsed = time.time() - start_time
         print(f'Training complete in {time_elapsed/60:.0f}m'
