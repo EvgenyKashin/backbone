@@ -1,8 +1,8 @@
-import torch
 import time
 import copy
-import tqdm
-
+from pathlib import Path
+import torch
+from . import utils
 
 class Bone:
     def __init__(self,
@@ -10,37 +10,51 @@ class Bone:
                  datasets,
                  criterion,
                  optimizer,
-                 metric_fn,
-                 batch_size,
-                 num_workers,
-                 metric_increase=True):
+                 scheduler=None,
+                 metric_fn=None,
+                 batch_size=8,
+                 num_workers=4,
+                 metric_increase=True,
+                 weights_path='weights/best_model.pth'):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
-        self.metric_fn = metric_fn
+        self.scheduler = None
+        self.metric_fn = criterion if metric_fn is None else metric_fn
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.metric_increase = metric_increase
+        self.weights_path = Path(weights_path)
+        self.epochs_count = 0
 
-        self.dataloaders = {  # TODO: не привязываться к train val а делать с теми которые дадут
+        self.dataloaders = {  # TODO: automatically handel all in loop
             'train': torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size,
                                                  shuffle=True, num_workers=num_workers),
             'val': torch.utils.data.DataLoader(datasets['val'], batch_size=batch_size,
                                                shuffle=True, num_workers=num_workers)
         }
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.weights_path.parent.mkdir(exist_ok=True)
 
-    def epoch(self, phase):
+    def epoch(self, epoch_num, phase):
         running_loss = 0
         running_metric = 0
-        for inputs, labels in tqdm.tqdm(self.dataloaders[phase]):  # todo upgrade tqdm
+        pbar = utils.get_pbar(self.dataloaders[phase], f'{phase} {epoch_num + 1 / self.epochs_count}')
+
+        for inputs, labels in self.dataloaders[phase]:
             loss, metric = self.step(inputs, labels, phase)
 
             running_loss += loss * inputs.size(0)
             running_metric += metric * inputs.size(0)
 
+            postfix = {'loss': f'{running_loss:.3f}',
+                       'metric': f'{running_metric:.3f}'}
+            pbar.set_postfix(postfix)
+            pbar.update()
+
         running_loss /= len(self.dataloaders[phase].dataset)
         running_metric /= len(self.dataloaders[phase].dataset)
+        pbar.clear() # TODO: test
 
         return running_loss, running_metric
 
@@ -60,8 +74,9 @@ class Bone:
 
             return loss.cpu().data.numpy(), metric.cpu().data.numpy()
 
-    def train(self, num_epochs):
+    def fit(self, epochs_count):
         start_time = time.time()
+        self.epochs_count = epochs_count
 
         # train_acc_history = []
         # val_acc_history = [] # tb
@@ -73,13 +88,13 @@ class Bone:
                 return True
             return new_m > old_m if self.metric_increase else new_m < old_m
 
-        for epoch in range(num_epochs):
-            print(f'Epoch: {epoch}/{num_epochs-1}')
+        for epoch_num in range(epochs_count):
+            # print(f'Epoch: {epoch}/{num_epochs-1}')
 
             for phase in ['train', 'val']:  # TODO: test
                 if phase == 'train':
                     self.model.train()
-                    loss, metric = self.epoch(phase)
+                    loss, metric = self.epoch(epoch_num, phase)
                 else:
                     self.model.eval()
                     loss, metric = self.epoch(phase)
@@ -88,14 +103,14 @@ class Bone:
 
                 if phase == 'val' and is_better(metric, best_metric):
                     best_metric = metric
-                    best_model_wts = copy.deepcopy(self.model.state_dict())  # TODO: save
+                    torch.save(self.model.state_dict(), self.weights_path)
 
                 # if phase == 'val': # TODO:TB
                 #     val_acc_history.append(epoch_acc)
                 # else:
                 #     train_acc_history.append(epoch_acc)
 
-            print()
+            # print()
 
         time_elapsed = time.time() - start_time
         print(f'Training complete in {time_elapsed/60:.0f}m {time_elapsed%60:.0f}s')
