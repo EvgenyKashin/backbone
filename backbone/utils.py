@@ -18,7 +18,16 @@ def accuracy_metric(outputs, y_true):
 def get_pbar(dataloader, desc):
     return tqdm(total=len(dataloader),
                 desc=desc.title(),
-                file=sys.stdout)
+                file=sys.stdout,
+                leave=True,
+                ncols=0)
+
+
+def update_pbar(pbar, loss, metric):
+    postfix = {'loss': f'{loss:.3f}',
+               'metric': f'{metric:.3f}'}
+    pbar.set_postfix(postfix)
+    pbar.update()
 
 
 def get_lr(opt):

@@ -76,7 +76,7 @@ class Bone:
         running_loss = 0
         running_metric = 0
         pbar = utils.get_pbar(self.dataloaders[phase],
-                              f'{phase} {epoch_num + 1 / self.epochs_count}')
+                              f'{phase} {epoch_num + 1}/{self.epochs_count}')
 
         if phase == 'val' and self.scheduler and not self.scheduling_after_ep:
             self.scheduler.step()
@@ -86,11 +86,7 @@ class Bone:
 
             running_loss += loss * inputs.size(0)
             running_metric += metric * inputs.size(0)
-
-            postfix = {'loss': f'{running_loss:.3f}',
-                       'metric': f'{running_metric:.3f}'}
-            pbar.set_postfix(postfix)
-            pbar.update()
+            utils.update_pbar(pbar, loss, metric)
 
             self.phase_writer[phase].add_scalar('batch/loss',
                                                 loss,
@@ -104,7 +100,8 @@ class Bone:
 
         running_loss /= len(self.dataloaders[phase].dataset)
         running_metric /= len(self.dataloaders[phase].dataset)
-        pbar.clear()  # TODO: test
+        utils.update_pbar(pbar, running_loss, running_metric)
+        pbar.close()  # TODO: test
 
         self.phase_writer[phase].add_scalar('epoch/loss', running_loss,
                                             global_step=epoch_num)
@@ -133,16 +130,12 @@ class Bone:
             return new_m > old_m if self.metric_increase else new_m < old_m
 
         for epoch_num in range(epochs_count):
-            # print(f'Epoch: {epoch}/{num_epochs-1}')
-
             for phase in ['train', 'val']:  # TODO: test phase
                 if phase == 'train':
                     self.model.train()
                 else:
                     self.model.eval()
                 loss, metric = self.epoch(epoch_num, phase)
-
-                print(f'{phase} Loss: {loss:.4f}, Metric: {metric:.4f}')
 
                 if phase == 'val':
                     if is_better(metric, best_metric):

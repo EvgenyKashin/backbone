@@ -38,6 +38,7 @@ TODO:
 - scheduler +-
 - tensorboard
 - early stopping +-
+- resume
 
 conda remove pytorch torchvision
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
