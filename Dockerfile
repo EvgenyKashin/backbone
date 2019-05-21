@@ -10,4 +10,13 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libglib2.0-0 \
     rsync
-RUN pip install pandas jupyter pillow==5.4.1 tqdm jpeg4py matplotlib scikit-learn albumentations torchsummary # TODO: requirements.txt
+RUN pip install pandas \
+    jupyter \
+    pillow==5.4.1 \
+    tqdm \
+    jpeg4py \
+    matplotlib \
+    scikit-learn \
+    albumentations \
+    torchsummary \
+    tb-nightly \ # TODO: requirements.txt

@@ -1,4 +1,5 @@
 import sys
+from functools import reduce
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -18,3 +19,9 @@ def get_pbar(dataloader, desc):
     return tqdm(total=len(dataloader),
                 desc=desc.title(),
                 file=sys.stdout)
+
+
+def get_lr(opt):
+    lrs = [pg["lr"] for pg in opt.param_groups]
+    res = reduce(lambda x, y: x + y, lrs) / len(lrs)
+    return res

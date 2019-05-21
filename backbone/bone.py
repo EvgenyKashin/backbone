@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from . import utils
 
 
@@ -17,7 +18,8 @@ class Bone:
                  metric_increase=False,
                  batch_size=8,
                  num_workers=4,
-                 weights_path='weights/best_model.pth'):
+                 weights_path='weights/best_model.pth',
+                 log_dir='logs/experiment'):
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
@@ -29,44 +31,30 @@ class Bone:
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.weights_path = Path(weights_path)
+        self.log_dir = Path(log_dir)
         self.epochs_count = 0
 
-        self.dataloaders = {  # TODO: automatically handel all in loop
-            'train': torch.utils.data.DataLoader(datasets['train'], batch_size=batch_size,
-                                                 shuffle=True, num_workers=num_workers),
-            'val': torch.utils.data.DataLoader(datasets['val'], batch_size=batch_size,
-                                               shuffle=True, num_workers=num_workers)
-        }
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.weights_path.parent.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
 
-    def epoch(self, epoch_num, phase):
-        running_loss = 0
-        running_metric = 0
-        pbar = utils.get_pbar(self.dataloaders[phase], f'{phase} {epoch_num + 1 / self.epochs_count}')
+        self.dataloaders = {  # TODO: automatically handel all in loop
+            'train': torch.utils.data.DataLoader(datasets['train'],
+                                                 batch_size=batch_size,
+                                                 shuffle=True,
+                                                 num_workers=num_workers),
+            'val': torch.utils.data.DataLoader(datasets['val'],
+                                               batch_size=batch_size,
+                                               shuffle=True,
+                                               num_workers=num_workers)
+        }
+        self.device = torch.device('cuda:0' if torch.cuda.is_available()
+                                   else 'cpu')
 
-        if self.scheduler and not self.scheduling_after_ep:
-            self.scheduler.step()
-
-        for inputs, labels in self.dataloaders[phase]:
-            loss, metric = self.step(inputs, labels, phase)
-
-            running_loss += loss * inputs.size(0)
-            running_metric += metric * inputs.size(0)
-
-            postfix = {'loss': f'{running_loss:.3f}',
-                       'metric': f'{running_metric:.3f}'}
-            pbar.set_postfix(postfix)
-            pbar.update()
-
-        running_loss /= len(self.dataloaders[phase].dataset)
-        running_metric /= len(self.dataloaders[phase].dataset)
-        pbar.clear()  # TODO: test
-
-        if self.scheduler and self.scheduling_after_ep:
-            self.scheduler.step(running_metric)
-
-        return running_loss, running_metric
+        self.phase_iters = {'train': 0, 'val': 0}
+        self.phase_writer = {
+            'train': SummaryWriter(self.log_dir / 'train'),
+            'val': SummaryWriter(self.log_dir / 'val')
+        }
 
     def step(self, inputs, labels, phase):
             inputs = inputs.to(self.device)
@@ -83,6 +71,54 @@ class Bone:
                     self.optimizer.step()
 
             return loss.cpu().data.numpy(), metric.cpu().data.numpy()
+
+    def epoch(self, epoch_num, phase):
+        running_loss = 0
+        running_metric = 0
+        pbar = utils.get_pbar(self.dataloaders[phase],
+                              f'{phase} {epoch_num + 1 / self.epochs_count}')
+
+        if phase == 'val' and self.scheduler and not self.scheduling_after_ep:
+            self.scheduler.step()
+
+        for inputs, labels in self.dataloaders[phase]:
+            loss, metric = self.step(inputs, labels, phase)
+
+            running_loss += loss * inputs.size(0)
+            running_metric += metric * inputs.size(0)
+
+            postfix = {'loss': f'{running_loss:.3f}',
+                       'metric': f'{running_metric:.3f}'}
+            pbar.set_postfix(postfix)
+            pbar.update()
+
+            self.phase_writer[phase].add_scalar('batch/loss',
+                                                loss,
+                                                global_step=self.phase_iters[
+                                                    phase])
+            self.phase_writer[phase].add_scalar('batch/metric',
+                                                metric,
+                                                global_step=self.phase_iters[
+                                                    phase])
+            self.phase_iters[phase] += 1
+
+        running_loss /= len(self.dataloaders[phase].dataset)
+        running_metric /= len(self.dataloaders[phase].dataset)
+        pbar.clear()  # TODO: test
+
+        self.phase_writer[phase].add_scalar('epoch/loss', running_loss,
+                                            global_step=epoch_num)
+        self.phase_writer[phase].add_scalar('epoch/metric', running_metric,
+                                            global_step=epoch_num)
+
+        if phase == 'val':
+            if self.scheduler and self.scheduling_after_ep:
+                self.scheduler.step(running_metric)
+            lr = utils.get_lr(self.optimizer)  # float(
+            self.phase_writer[phase].add_scalar('epoch/lr', lr,
+                                                global_step=epoch_num)
+
+        return running_loss, running_metric
 
     def fit(self, epochs_count):
         start_time = time.time()
@@ -120,7 +156,8 @@ class Bone:
                     else:
                         epoch_without_improvement += 1
 
-            if self.early_stop_epoch is not None and epoch_without_improvement == self.early_stop_epoch:
+            if self.early_stop_epoch is not None and\
+                    epoch_without_improvement == self.early_stop_epoch:
                 print('Early stopping')
                 break
 
@@ -132,7 +169,8 @@ class Bone:
             # print()
 
         time_elapsed = time.time() - start_time
-        print(f'Training complete in {time_elapsed/60:.0f}m {time_elapsed%60:.0f}s')
+        print(f'Training complete in {time_elapsed/60:.0f}m'
+              f' {time_elapsed%60:.0f}s')
         print(f'Best val metric: {best_metric:.4f}')
 
         # model.load_state_dict(best_model_wts)
