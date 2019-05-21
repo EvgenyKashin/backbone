@@ -33,12 +33,13 @@ rm test1.zip
 rsync -av -e "ssh -p 18180" --exclude=".idea" --exclude=".git" --exclude="notebooks" backbone root@ssh5.vast.ai:/root
 
 TODO:
-- tqdm +-
-- checkpoint +-
+- tqdm +
+- checkpoint +
 - scheduler +-
-- tensorboard
+- tensorboard +
 - early stopping +-
-- resume
+- resume training
+- multiple GPU
 
 conda remove pytorch torchvision
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch

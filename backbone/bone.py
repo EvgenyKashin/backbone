@@ -49,8 +49,6 @@ class Bone:
         }
         self.device = torch.device('cuda:0' if torch.cuda.is_available()
                                    else 'cpu')
-
-        self.phase_iters = {'train': 0, 'val': 0}
         self.phase_writer = {
             'train': SummaryWriter(self.log_dir / 'train'),
             'val': SummaryWriter(self.log_dir / 'val')
@@ -81,27 +79,23 @@ class Bone:
         if phase == 'val' and self.scheduler and not self.scheduling_after_ep:
             self.scheduler.step()
 
-        for inputs, labels in self.dataloaders[phase]:
+        for i, (inputs, labels) in enumerate(self.dataloaders[phase]):
             loss, metric = self.step(inputs, labels, phase)
 
             running_loss += loss * inputs.size(0)
             running_metric += metric * inputs.size(0)
             utils.update_pbar(pbar, loss, metric)
 
-            self.phase_writer[phase].add_scalar('batch/loss',
-                                                loss,
-                                                global_step=self.phase_iters[
-                                                    phase])
-            self.phase_writer[phase].add_scalar('batch/metric',
-                                                metric,
-                                                global_step=self.phase_iters[
-                                                    phase])
-            self.phase_iters[phase] += 1
+            step = epoch_num * len(self.dataloaders['train']) + i
+            self.phase_writer[phase].add_scalar('batch/loss', loss,
+                                                global_step=step)
+            self.phase_writer[phase].add_scalar('batch/metric', metric,
+                                                global_step=step)
 
         running_loss /= len(self.dataloaders[phase].dataset)
         running_metric /= len(self.dataloaders[phase].dataset)
         utils.update_pbar(pbar, running_loss, running_metric)
-        pbar.close()  # TODO: test
+        pbar.close()
 
         self.phase_writer[phase].add_scalar('epoch/loss', running_loss,
                                             global_step=epoch_num)
@@ -111,7 +105,7 @@ class Bone:
         if phase == 'val':
             if self.scheduler and self.scheduling_after_ep:
                 self.scheduler.step(running_metric)
-            lr = utils.get_lr(self.optimizer)  # float(
+            lr = utils.get_lr(self.optimizer)
             self.phase_writer[phase].add_scalar('epoch/lr', lr,
                                                 global_step=epoch_num)
 
