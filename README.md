@@ -1,4 +1,4 @@
-## Backbone for PyTorch train loop
+## Backbone for PyTorch training loop
 Work in progress
 
 ### SRM 
