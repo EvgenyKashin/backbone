@@ -38,7 +38,7 @@ def get_lr(opt):
 
 
 def get_logger():
-    logger = logging.getLogger('backbone')
+    logger = logging.getLogger('back')
     logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(sys.stdout)
