@@ -44,7 +44,7 @@ class Bone:
                                                  num_workers=num_workers),
             'val': torch.utils.data.DataLoader(datasets['val'],
                                                batch_size=batch_size,
-                                               shuffle=True,
+                                               shuffle=False,
                                                num_workers=num_workers)
         }
         self.device = torch.device('cuda:0' if torch.cuda.is_available()
