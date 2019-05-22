@@ -1,7 +1,9 @@
 import time
 from pathlib import Path
 import torch
+import torch.nn
 from torch.utils.tensorboard import SummaryWriter
+import torch.backends.cudnn as cudnn
 from . import utils
 
 
@@ -18,6 +20,7 @@ class Bone:
                  metric_increase=False,
                  batch_size=8,
                  num_workers=4,
+                 resume=False,
                  weights_path='weights/best_model.pth',
                  log_dir='logs/experiment'):
         self.model = model
@@ -30,6 +33,7 @@ class Bone:
         self.metric_increase = metric_increase
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.resume = resume
         self.weights_path = Path(weights_path)
         self.log_dir = Path(log_dir)
         self.epochs_count = 0
@@ -47,12 +51,20 @@ class Bone:
                                                shuffle=False,
                                                num_workers=num_workers)
         }
-        self.device = torch.device('cuda:0' if torch.cuda.is_available()
-                                   else 'cpu')
         self.phase_writer = {
             'train': SummaryWriter(self.log_dir / 'train'),
             'val': SummaryWriter(self.log_dir / 'val')
         }
+
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if self.device == 'cuda':
+            self.model = torch.nn.DataParallel(self.model)
+            cudnn.benchmark = True
+
+        if self.resume:
+            assert self.weights_path.exists(), 'Resume is not possible, no weights'
+            checkpoint = torch.load(self.weights_path)
+            self.model.load_state_dict(checkpoint)
 
     def step(self, inputs, labels, phase):
             inputs = inputs.to(self.device)

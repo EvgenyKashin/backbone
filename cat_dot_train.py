@@ -13,11 +13,8 @@ epochs_count = 20
 num_workers = 8
 
 datasets = cat_dog.get_datasets(data_dir)
-
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model = vgg11(num_classes, batch_norm=True)
 
-model = model.to(device)
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 scheduler = StepLR(optimizer, step_size=2, gamma=0.5)
 criterion = nn.CrossEntropyLoss()

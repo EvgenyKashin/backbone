@@ -15,7 +15,6 @@ num_workers = 12
 
 datasets = cifar10.get_datasets(data_dir)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if model_name == 'resnet':
     model = resnet20(num_classes=num_classes)  # 0.877 - 272,474
 elif model_name == 'senet':
@@ -23,7 +22,6 @@ elif model_name == 'senet':
 elif model_name == 'srmnet':
     model = srm_resnet20(num_classes=num_classes)  # and 0.871 - 273,818( +0.5%)
 
-model = model.to(device)
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
                       weight_decay=1e-4)
 criterion = nn.CrossEntropyLoss()
