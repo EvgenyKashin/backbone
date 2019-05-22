@@ -8,8 +8,8 @@ with open(path.join(DIR, 'README.md')) as f:
     README = f.read()
 
 setup(
-    name='backbone',
-    packages=['backbone'],
+    name='back',
+    packages=['back'],
     description='Backbone for PyTorch training loop',
     long_description=README,
     long_description_content_type='text/markdown',
