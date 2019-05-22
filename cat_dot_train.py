@@ -7,7 +7,6 @@ from models.vgg import vgg11
 from datasets import cat_dog
 
 data_dir = 'train'
-input_size = 224
 num_classes = 2
 batch_size = 32
 epochs_count = 20
