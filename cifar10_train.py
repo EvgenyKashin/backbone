@@ -4,19 +4,24 @@ import torch.optim as optim
 from backbone import Bone, utils
 from datasets import cifar10
 from models.resnet import resnet20
+from models.custom_resnet import se_resnet20, srm_resnet20
 
 data_dir = 'cifar10'
-model_name = 'resnet'
+model_name = 'srmnet'
 num_classes = 10
 batch_size = 256
-epochs_count = 200
+epochs_count = 150
 num_workers = 12
 
 datasets = cifar10.get_datasets(data_dir)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 if model_name == 'resnet':
-    model = resnet20(num_classes=num_classes)
+    model = resnet20(num_classes=num_classes)  # 0.877 and 272,474
+elif model_name == 'senet':
+    model = se_resnet20(num_classes=num_classes)  # 0.877 and 274,490(+0.7%)
+elif model_name == 'srmnet':
+    model = srm_resnet20(num_classes=num_classes)  # and 273,818( +0.5%)
 
 model = model.to(device)
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
