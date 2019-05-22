@@ -1,4 +1,5 @@
 import sys
+import logging
 from functools import reduce
 import numpy as np
 import torch
@@ -34,3 +35,16 @@ def get_lr(opt):
     lrs = [pg["lr"] for pg in opt.param_groups]
     res = reduce(lambda x, y: x + y, lrs) / len(lrs)
     return res
+
+
+def get_logger():
+    logger = logging.getLogger('backbone')
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(ascitime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+    return logger

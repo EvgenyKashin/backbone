@@ -37,6 +37,7 @@ class Bone:
         self.weights_path = Path(weights_path)
         self.log_dir = Path(log_dir)
         self.epochs_count = 0
+        self.logger = utils.get_logger()
 
         self.weights_path.parent.mkdir(exist_ok=True)
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -62,9 +63,12 @@ class Bone:
             cudnn.benchmark = True
 
         if self.resume:
-            assert self.weights_path.exists(), 'Resume is not possible, no weights'
-            checkpoint = torch.load(self.weights_path)
-            self.model.load_state_dict(checkpoint)
+            if not self.weights_path.exists():
+                self.logger.error('Resume is not possible, no weights')
+            else:
+                self.logger.info(f'Resuming from {self.weights_path}')
+                checkpoint = torch.load(self.weights_path)
+                self.model.load_state_dict(checkpoint)
 
     def step(self, inputs, labels, phase):
             inputs = inputs.to(self.device)
@@ -153,12 +157,10 @@ class Bone:
 
             if self.early_stop_epoch is not None and\
                     epoch_without_improvement == self.early_stop_epoch:
-                print('Early stopping')
+                self.logger.info('Early stopping')
                 break
 
         time_elapsed = time.time() - start_time
-        print(f'Training complete in {time_elapsed/60:.0f}m'
-              f' {time_elapsed%60:.0f}s')
-        print(f'Best val metric: {best_metric:.4f}')
-
-        # model.load_state_dict(best_model_wts)
+        self.logger.info(f'Training complete in {time_elapsed/60:.0f}m'
+                         f' {time_elapsed%60:.0f}s')
+        self.logger.info(f'Best val metric: {best_metric:.4f}')
