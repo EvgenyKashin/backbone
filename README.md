@@ -35,7 +35,7 @@ rsync -av -e "ssh -p 18180" --exclude=".idea" --exclude=".git" --exclude="notebo
 TODO:
 - tqdm +
 - checkpoint +
-- scheduler +-
+- scheduler +
 - tensorboard +
 - early stopping +-
 - resume training
@@ -43,3 +43,5 @@ TODO:
 
 conda remove pytorch torchvision
 conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
+
+tensorboard --logdir=logs --host=0.0.0.0 --port=8080
