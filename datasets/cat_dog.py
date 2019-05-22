@@ -6,7 +6,7 @@ import torch
 from torchvision import transforms
 from torchvision.transforms import Normalize
 from albumentations import Compose, HorizontalFlip, SmallestMaxSize, CenterCrop, RandomCrop
-from backbone import utils
+from back import utils
 
 
 def load_train_val_data(data_path):

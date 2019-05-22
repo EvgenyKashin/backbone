@@ -1,7 +1,6 @@
-import torch
 import torch.nn as nn
 import torch.optim as optim
-from backbone import Bone, utils
+from back import Bone, utils
 from datasets import cifar10
 from models.resnet import resnet20
 from models.custom_resnet import se_resnet20, srm_resnet20
@@ -26,15 +25,15 @@ optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
                       weight_decay=1e-4)
 criterion = nn.CrossEntropyLoss()
 
-bone = Bone(model,
-            datasets,
-            criterion,
-            optimizer,
-            metric_fn=utils.accuracy_metric,
-            metric_increase=True,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            weights_path=f'weights/best_{model_name}.pth',
-            log_dir=f'logs/{model_name}')
+backbone = Bone(model,
+                datasets,
+                criterion,
+                optimizer,
+                metric_fn=utils.accuracy_metric,
+                metric_increase=True,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                weights_path=f'weights/best_{model_name}.pth',
+                log_dir=f'logs/{model_name}')
 
-bone.fit(epochs_count)
+backbone.fit(epochs_count)
