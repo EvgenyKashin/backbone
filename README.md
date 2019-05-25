@@ -7,8 +7,8 @@ from back import Bone
 ```
 
 ### SRM 
-[Implementation](cifar10_train.py) of "SRM : A Style-based Recalibration Module for Convolutional Neural Networks"
- 
-TODO:
-- [ ] Cifar10 benchmark
-- [ ] ImageNet benchmark
+
+## Docker
+`docker build -t backbone_pytorch .`
+OR
+`sudo docker pull digitman/backbone_pytorch:latest`

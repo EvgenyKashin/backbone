@@ -11,5 +11,9 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     rsync
 
-COPY requirements.txt /tmp/
-RUN pip install --requirement /tmp/requirements.txt
+RUN pip install back==0.0.3 \
+                matplotlib==3.1.0 \
+                torchsummary==1.5.1 \
+                tb-nightly==1.14.0a20190522 \
+                jupyter==1.0.0
+
