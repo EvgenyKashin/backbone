@@ -15,5 +15,7 @@ RUN pip install back==0.0.3 \
                 matplotlib==3.1.0 \
                 torchsummary==1.5.1 \
                 tb-nightly==1.14.0a20190522 \
-                jupyter==1.0.0
+                jupyter==1.0.0 \
+                pretrainedmodels==0.7.4
+
 
