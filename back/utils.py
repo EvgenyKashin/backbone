@@ -1,4 +1,5 @@
 import sys
+import random
 import logging
 from functools import reduce
 import numpy as np
@@ -49,3 +50,13 @@ def get_logger():
 
     logger.addHandler(handler)
     return logger
+
+
+def set_seed(seed=None, hard=False):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    if hard:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
