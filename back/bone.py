@@ -1,5 +1,6 @@
 import time
 from pathlib import Path
+import shutil
 import torch
 import torch.nn
 from torch.utils.tensorboard import SummaryWriter
@@ -21,6 +22,8 @@ class Bone:
                  batch_size=8,
                  num_workers=4,
                  resume=False,
+                 data_parallel=False,
+                 seed=None,
                  weights_path='weights/best_model.pth',
                  log_dir='logs/experiment'):
         self.model = model
@@ -34,13 +37,15 @@ class Bone:
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.resume = resume
+        self.data_parallel = data_parallel
+        self.seed = seed
         self.weights_path = Path(weights_path)
         self.log_dir = Path(log_dir)
         self.epochs_count = 0
         self.logger = utils.get_logger()
 
-        self.weights_path.parent.mkdir(exist_ok=True)
-        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.recreate_experiment_folders(from_scratch=False)
+        utils.set_seed(seed)
 
         self.dataloaders = {  # TODO: automatically handel all in loop
             'train': torch.utils.data.DataLoader(datasets['train'],
@@ -52,15 +57,6 @@ class Bone:
                                                shuffle=False,
                                                num_workers=num_workers)
         }
-        self.phase_writer = {
-            'train': SummaryWriter(self.log_dir / 'train'),
-            'val': SummaryWriter(self.log_dir / 'val')
-        }
-
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        if self.device == 'cuda':
-            self.model = torch.nn.DataParallel(self.model)
-            cudnn.benchmark = True
 
         if self.resume:
             if not self.weights_path.exists():
@@ -69,6 +65,25 @@ class Bone:
                 self.logger.info(f'Resuming from {self.weights_path}')
                 checkpoint = torch.load(self.weights_path)
                 self.model.load_state_dict(checkpoint)
+
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if self.device == 'cuda' and data_parallel:
+            self.model = torch.nn.DataParallel(self.model)
+
+    def recreate_experiment_folders(self, from_scratch=False):
+        if from_scratch:
+            if self.weights_path.parent.exists():
+                shutil.rmtree(self.weights_path.parent)
+            if self.log_dir.exists():
+                shutil.rmtree(self.log_dir)
+
+        self.weights_path.parent.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+        self.phase_writer = {
+            'train': SummaryWriter(self.log_dir / 'train'),
+            'val': SummaryWriter(self.log_dir / 'val')
+        }
 
     def step(self, inputs, labels, phase):
             inputs = inputs.to(self.device)
@@ -127,17 +142,20 @@ class Bone:
 
         return running_loss, running_metric
 
-    def fit(self, epochs_count):
+    def fit(self, epochs_count, from_scratch=False):
+        if from_scratch:
+            self.recreate_experiment_folders(from_scratch)
+
         start_time = time.time()
         self.epochs_count = epochs_count
         epoch_without_improvement = 0
         best_metric = None
 
-        def is_better(new_m, old_m):
-            # TODO: add delta
+        def is_better(new_m, old_m, eps=1e-5):
             if best_metric is None:
                 return True
-            return new_m > old_m if self.metric_increase else new_m < old_m
+            return new_m > old_m + eps if self.metric_increase else \
+                new_m < old_m - eps
 
         for epoch_num in range(epochs_count):
             for phase in ['train', 'val']:  # TODO: test phase
@@ -150,7 +168,12 @@ class Bone:
                 if phase == 'val':
                     if is_better(metric, best_metric):
                         best_metric = metric
-                        torch.save(self.model.state_dict(), self.weights_path)
+                        if self.data_parallel:
+                            torch.save(self.model.module.state_dict(),
+                                       self.weights_path)
+                        else:
+                            torch.save(self.model.state_dict(),
+                                       self.weights_path)
                         epoch_without_improvement = 0
                     else:
                         epoch_without_improvement += 1
