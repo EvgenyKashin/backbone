@@ -23,7 +23,7 @@ class Bone:
                  num_workers=4,
                  resume=False,
                  data_parallel=False,
-                 seed=None,
+                 seed=0,
                  weights_path='weights/best_model.pth',
                  log_dir='logs/experiment'):
         self.model = model
