@@ -14,7 +14,7 @@ setup(
     long_description=README,
     long_description_content_type='text/markdown',
     install_requires=INSTALL_PACKAGES,
-    version='0.1.3',
+    version='0.1.4',
     url='https://github.com/EvgenyKashin/backbone',
     author='Evgeny Kashin',
     author_email='kashinevge@gmail.com',
