@@ -65,6 +65,7 @@ class Bone:
                 self.logger.info(f'Resuming from {self.weights_path}')
                 checkpoint = torch.load(self.weights_path)
                 self.model.load_state_dict(checkpoint)
+                # TODO: bug, move model to device
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         if self.device == 'cuda' and data_parallel:
@@ -73,7 +74,7 @@ class Bone:
     def recreate_experiment_folders(self, from_scratch=False):
         if from_scratch:
             if self.weights_path.parent.exists():
-                shutil.rmtree(self.weights_path.parent)
+                self.weights_path.unlink()
             if self.log_dir.exists():
                 shutil.rmtree(self.log_dir)
 
