@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
@@ -13,6 +14,9 @@ num_workers = 8
 
 datasets = cat_dog.get_datasets(data_dir)
 model = vgg11(num_classes, batch_norm=True)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 scheduler = StepLR(optimizer, step_size=10, gamma=0.5)

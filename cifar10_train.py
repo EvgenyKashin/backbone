@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from back import Bone, utils
@@ -20,6 +21,9 @@ elif model_name == 'senet':
     model = se_resnet20(num_classes=num_classes)  # 0.877 - 274,490(+0.7%)
 elif model_name == 'srmnet':
     model = srm_resnet20(num_classes=num_classes)  # and 0.871 - 273,818( +0.5%)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = model.to(device)
 
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9,
                       weight_decay=1e-4)
