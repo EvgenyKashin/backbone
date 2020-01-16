@@ -152,7 +152,7 @@ class Bone:
         best_metric = None
 
         def is_better(new_m, old_m, eps=1e-5):
-            if best_metric is None:
+            if old_m is None:
                 return True
             return new_m > old_m + eps if self.metric_increase else \
                 new_m < old_m - eps
@@ -175,8 +175,11 @@ class Bone:
                             torch.save(self.model.state_dict(),
                                        self.weights_path)
                         epoch_without_improvement = 0
+                        self.logger.debug('Val metric improved')
                     else:
                         epoch_without_improvement += 1
+                        self.logger.debug(f'Val metric did not improve for '
+                                          f'{epoch_without_improvement} epochs')
 
             if self.early_stop_epoch is not None and\
                     epoch_without_improvement == self.early_stop_epoch:
